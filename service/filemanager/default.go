@@ -22,7 +22,8 @@ type defaultManager struct {
 }
 
 func WithDefault(ctx context.Context, basePath string, tempPath string, userID int, groupID int) context.Context {
-	chown := userID != os.Getuid() || groupID != os.Getgid()
+	// Files are created by the effective user; under setuid the real uid is already the target, so comparing it would skip every chown.
+	chown := userID != os.Geteuid() || groupID != os.Getegid()
 	if tempPath == "" {
 		tempPath = os.TempDir()
 	}
