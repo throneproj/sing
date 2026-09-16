@@ -27,7 +27,19 @@ func WrapH2(err error) error {
 	if Contains(err, "client disconnected", "body closed by handler", "response body closed", "; CANCEL") {
 		return net.ErrClosed
 	}
+	if Contains(err, "stream error: ") {
+		// an HTTP/2 connection reading a bare StreamError from its conn takes it as its own and spins forever
+		return &h2StreamError{err}
+	}
 	return err
+}
+
+type h2StreamError struct {
+	error
+}
+
+func (e *h2StreamError) Unwrap() error {
+	return e.error
 }
 
 func WrapGRPC(err error) error {
